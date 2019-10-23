@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
+//import myPackage.AccountJDBC;
 
 import java.text.SimpleDateFormat;
 
@@ -74,7 +74,7 @@ public class Server {
     }
     
     public static void main(String[] args){
-        int portNumber = 6000; 
+        int portNumber = 6000;
         
         Server server = new Server(portNumber);
         server.start();
@@ -90,7 +90,7 @@ public class Server {
         String Address;
         int Port;
         int P2pPort;
-        Boolean duplicate = false; //Duplicate flag
+        
         Boolean beingRequested = false; //A client is attempting to connect
         String requestResponse = null; //Client's response to request
         
