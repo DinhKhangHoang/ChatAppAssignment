@@ -59,7 +59,6 @@ public class Server {
             catch(Exception e) {
                 display ("Closing the Server and Clients: " + e);
             }
-                    
         }
         catch (IOException e) {
             String message = theDate.format(new Date()) + " Error on new ServerSocket: " + e + "\n";
@@ -237,7 +236,7 @@ public class Server {
         // Write the string to the Client Output
         private boolean writeMsg(String toSend) {
             if(!socket.isConnected()){
-                //close();
+                close();
                 return false;
             }
             Output.println(toSend);
