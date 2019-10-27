@@ -171,8 +171,9 @@ public class Server {
         		return;
         	}
         	boolean KeepGoing = true;
-        	while(KeepGoing) {
-        		try {
+        	try {
+        		while(KeepGoing) {
+        		
         			String packet = Input.readLine();
         			String[] seperated = packet.split(" ");
         			switch(seperated.length) {
@@ -214,11 +215,12 @@ public class Server {
         				break;
         			}
         		}
-        		catch(IOException e){
-        			display("Exception creating new Input/output Streams: " + e);
-                    return;
-        		}
+        		
         	}
+        	catch(IOException e){
+    			display("Exception creating new Input/output Streams: " + e);
+                //return;
+    		}
         	this.P2pPort = 0;
 			//set port = 0 offline
 			mapClient.replace(this.username, "0");
