@@ -3,6 +3,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.*;
 
 
 //import java.sql.Statement;
@@ -85,18 +86,23 @@ public class AccountJDBC {
     	return chch;
     }
     
-    public ResultSet getMetadata() {
+    public HashMap<String, Account> getMetadata() {
     	try {
     		Connection conn = getConnection(DB_URL, USER_NAME, PASSWORD);
     		if (conn == null)
     			return null;
     		PreparedStatement stmt = conn.prepareStatement("select * from Accounts");
     		
-    		ResultSet result = stmt.executeQuery();
-    		
-    		//conn.close();
+    		ResultSet rs = stmt.executeQuery();
+    		HashMap<String, Account> mapClient = new HashMap<String, Account>();
+    		while(rs.next()) {
+	        	Account acc = new Account(rs.getString(1), rs.getString(2));
+	        	mapClient.put(rs.getString(1), acc);
+	        }
+	        //rs.close();
+    		conn.close();
     		//return false;
-    		return result;
+    		return mapClient;
     	}
     	catch(Exception ex){
     		ex.printStackTrace();

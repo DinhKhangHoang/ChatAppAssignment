@@ -23,19 +23,8 @@ public class Server {
     	this.port = portNumber;
     	theDate = new SimpleDateFormat("h:mma"); //Set the time
         clientList = new ArrayList<ClientThread>();
-        mapClient = new HashMap<String, Account>();
         AccountJDBC db = AccountJDBC.getInstance();
-        ResultSet rs = db.getMetadata();
-        try {
-	        while(rs.next()) {
-	        	Account acc = new Account(rs.getString(1), rs.getString(2));
-	        	mapClient.put(rs.getString(1), acc);
-	        }
-	        rs.close();
-        }
-        catch(Exception ex) {
-        	ex.printStackTrace();
-        }
+        mapClient = db.getMetadata();//load data from database sql
     }
     
     public void start() {
@@ -48,13 +37,11 @@ public class Server {
             while(control){
                 display("Server is listening for Clients on port " + port + ".");
                 Socket socket = serverSocket.accept(); //Pause and wait for connection
-                
                 //If listening has stopped
                 if(!control) break;
                 ClientThread newThread = new ClientThread(socket);
                 clientList.add(newThread);
                 newThread.start();
-                
             }
             //Closing the server down due to break in loop
             try {
@@ -176,9 +163,7 @@ public class Server {
                         	acc = new Account(seperated[1], Address + ":" + seperated[2], "");
                         	mapClient.put(seperated[1], acc);
                         	AccountJDBC db = AccountJDBC.getInstance();
-                        	db.InsertAccount(seperated[1], "");
-                        	
-                        	
+                        	db.InsertAccount(seperated[1], ""); 	
                         	this.P2pPort = Integer.parseInt(seperated[2]);
                         	this.username = seperated[1];
                         	// dang nhap thanh cong
