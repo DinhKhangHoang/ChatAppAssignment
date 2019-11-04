@@ -1,7 +1,10 @@
 import java.net.*;
 import java.io.*;
-//import myPackage.AccountJDBC;
+import ACC.AccountJDBC;
+import ACC.Account;
 import java.util.*;
+import java.util.Date;
+import java.sql.*;
 
 //import Server.ClientThread;
 
@@ -14,13 +17,25 @@ public class Server {
     private SimpleDateFormat theDate; //For displaying time and date
     private int port; //The port to listen on
     private boolean control; //Decides whether to keep going
-    private Map<String, String> mapClient;
+    private Map<String, Account> mapClient;
     
     Server(int portNumber){
     	this.port = portNumber;
     	theDate = new SimpleDateFormat("h:mma"); //Set the time
         clientList = new ArrayList<ClientThread>();
-        mapClient = new HashMap<String, String>();
+        mapClient = new HashMap<String, Account>();
+        AccountJDBC db = AccountJDBC.getInstance();
+        ResultSet rs = db.getMetadata();
+        try {
+	        while(rs.next()) {
+	        	Account acc = new Account(rs.getString(1), rs.getString(2));
+	        	mapClient.put(rs.getString(1), acc);
+	        }
+	        rs.close();
+        }
+        catch(Exception ex) {
+        	ex.printStackTrace();
+        }
     }
     
     public void start() {
@@ -62,7 +77,7 @@ public class Server {
         }
         catch (IOException e) {
             String message = theDate.format(new Date()) + " Error on new ServerSocket: " + e + "\n";
-                display(message);
+            display(message);
         }
     }
     
@@ -76,6 +91,19 @@ public class Server {
             }
         }
     }
+    synchronized boolean makeFriend(String cur, String des) {
+    	for(int i = 0; i < clientList.size(); i++) {
+            ClientThread temp = clientList.get(i);
+            //It was found
+            if(temp.username == des) {
+                if(temp.writeMsg("REQUEST "+ cur))
+                	return true;
+                else
+                	return false;
+            }
+        }
+    	return false;
+    }
     
     private void display(String prompt) {
         String time = theDate.format(new Date()) + " " + prompt;
@@ -86,6 +114,9 @@ public class Server {
         int portNumber = 6000;
         Server server = new Server(portNumber);
         server.start();
+        //AccountJDBC db = AccountJDBC.getInstance();
+        //Account acc = new Account("Trung", "0", "");
+        //db.updateLstFriend("Trung", "Khang");
     }
     
     class ClientThread extends Thread{
@@ -118,11 +149,11 @@ public class Server {
                     packet = Input.readLine();
                     String[] seperated = packet.split(" ");
                     if(seperated.length == 3 && seperated[0].equalsIgnoreCase("login")) {
-                    	String value = mapClient.get(seperated[1]);
-                    	if(value != null) {
+                    	Account acc = mapClient.get(seperated[1]);
+                    	if(acc != null) {
                     		// neu tim thay client trong bang
                     		
-                    		if(!value.equals("0")) {
+                    		if(!acc.getIpPort().equals("0")) {
                     			//client da dang nhap roi
                     			display("Username conflict detected.");
                                 KeepGoing = writeMsg("FALSE");
@@ -130,7 +161,8 @@ public class Server {
                     		else {
                     			//client co trong bang nhung chua dang nhap
                     			// cho phep dang nhap + sua port luu trong bang
-                    			mapClient.replace(seperated[1], Address + ":" + seperated[2]);
+                    			acc.setIpPort(Address + ":" + seperated[2]);
+                    			mapClient.replace(seperated[1], acc);
                     			this.P2pPort = Integer.parseInt(seperated[2]);
                     			this.username = seperated[1];
                     			// dang nhap thanh cong
@@ -140,8 +172,13 @@ public class Server {
                     		}
                         }
                         else {
-                        	// dang nhap lan dau them client vao bang
-                        	mapClient.put(seperated[1], Address + ":" + seperated[2]);
+                        	// dang ky tai khoan lan dau them client vao bang
+                        	acc = new Account(seperated[1], Address + ":" + seperated[2], "");
+                        	mapClient.put(seperated[1], acc);
+                        	AccountJDBC db = AccountJDBC.getInstance();
+                        	db.InsertAccount(seperated[1], "");
+                        	
+                        	
                         	this.P2pPort = Integer.parseInt(seperated[2]);
                         	this.username = seperated[1];
                         	// dang nhap thanh cong
@@ -184,7 +221,7 @@ public class Server {
         				}
         				else if(seperated[0].equalsIgnoreCase("GET")) {
         					//gui list usr
-        					KeepGoing = sendListUsr2Client();
+        					KeepGoing = sendListFriend();
         				}
         				else {
         					display("Wrong request!");
@@ -193,16 +230,44 @@ public class Server {
         				break;
         			case 2:
         				if (seperated[0].equalsIgnoreCase("GET")) {
-        					if(mapClient.get(seperated[1]) == null)
+        					Account acc = mapClient.get(seperated[1]);
+        					if(acc == null)
         						//khong tim thay
         						KeepGoing = writeMsg("NOTFOUND");
-        					else if(mapClient.get(seperated[1]) == "0")
+        					else if(acc.getIpPort() == "0")
         						//Offline
         						KeepGoing = writeMsg("Offline");
         					else {
         						//tim thay destination client
-        						KeepGoing = writeMsg("FOUND" + mapClient.get(seperated[1]));
+        						KeepGoing = writeMsg("FOUND" + acc.getIpPort());
         					}
+        				}
+        				else if(seperated[0].equalsIgnoreCase("ADD")) {
+        					Account acc = mapClient.get(seperated[1]);
+        					if(acc == null)
+        						KeepGoing = writeMsg("NOTEXIST");
+        					else if(acc.getIpPort() == "0"){
+        						KeepGoing = writeMsg("false");
+        					}
+        					else {
+        						if(sendRequest(seperated[1])) {
+        							writeMsg("false");
+        						}
+        						else {
+        							writeMsg("true");
+        						}
+        					}
+        				}
+        				else if(seperated[0].equalsIgnoreCase("ACCEPTED")) {
+        					Account acc1 = mapClient.get(username);
+        					Account acc2 = mapClient.get(seperated[1]);
+        					acc1.addFriend(seperated[1]);
+        					acc2.addFriend(username);
+        					mapClient.replace(username, acc1);
+        					mapClient.replace(seperated[1], acc2);
+        					AccountJDBC db = AccountJDBC.getInstance();
+        					db.updateLstFriend(seperated[1], username);
+        					db.updateLstFriend(username, seperated[1]);
         				}
         				else {
         					display("Wrong request!");
@@ -223,28 +288,34 @@ public class Server {
     		}
         	this.P2pPort = 0;
 			//set port = 0 offline
-			mapClient.replace(this.username, "0");
+        	Account acc = mapClient.get(this.username);
+        	acc.setIpPort("0");
+			mapClient.replace(this.username, acc);
         	remove(username);
         	close();
         }
         
+        private boolean sendRequest(String desname) {
+        	return makeFriend(username, desname);
+        }
         //gui list user cho client
-        private boolean sendListUsr2Client() {
+        private boolean sendListFriend() {
         	boolean successful = true;
         	successful = writeMsg("LIST");
-        	for(Map.Entry<String, String> m: mapClient.entrySet()) {
-        		if(m.getKey().equals(username))
-        			continue;
-        		else {
-        			if(m.getValue().equals("0")) {
-        				successful = writeMsg(m.getKey() + " " + "false");
-        				//writeMsg(m.getValue());
-        			}
-        			else {
-        				successful = writeMsg(m.getKey() + " " + "true");
-        			}
-        		}
+        	Account acc = mapClient.get(username);
+        	String[] lstFriend = acc.getLstFriend();
+        	if(lstFriend != null) {
+        		for(int i = 0; i < lstFriend.length; i ++) {
+            		String ipport = mapClient.get(lstFriend[i]).getIpPort();
+            		if(ipport.equals("0")) {
+            			successful = writeMsg(lstFriend[i] + " " + "false");
+            		}
+            		else {
+            			successful = writeMsg(lstFriend[i] + " " + "true");
+            		}
+            	}
         	}
+        	
         	successful = writeMsg("END");
         	return successful;
         }
