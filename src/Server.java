@@ -101,9 +101,6 @@ public class Server {
         int portNumber = 6000;
         Server server = new Server(portNumber);
         server.start();
-        //AccountJDBC db = AccountJDBC.getInstance();
-        //Account acc = new Account("Trung", "0", "");
-        //db.updateLstFriend("Trung", "Khang");
     }
     
     class ClientThread extends Thread{
@@ -224,7 +221,7 @@ public class Server {
         						KeepGoing = writeMsg("Offline");
         					else {
         						//tim thay destination client
-        						KeepGoing = writeMsg("FOUND" + acc.getIpPort());
+        						KeepGoing = writeMsg("FOUND" + acc.getUserName()+ " " + acc.getIpPort());
         					}
         				}
         				else if(seperated[0].equalsIgnoreCase("ADD")) {
