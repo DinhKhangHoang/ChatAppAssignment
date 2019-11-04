@@ -68,10 +68,7 @@ public class AccountJDBC {
     		if (conn == null)
     			return false;
     		PreparedStatement check = conn.prepareStatement("select * from Accounts where USERNAME = ?");
-    		
     		check.setString(1, userName);
-    		
-    		
     		ResultSet result = check.executeQuery();
     		if (result.next() != false) {
     			//conn.close();
@@ -81,7 +78,7 @@ public class AccountJDBC {
     		//return false;
     	}
     	catch(Exception ex){
-    		
+    		ex.printStackTrace();
     	}
     	return chch;
     }
