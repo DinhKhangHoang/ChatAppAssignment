@@ -184,7 +184,7 @@ public class Server {
         
         //xu li tin hieu tu client
         public void run() {
-        	if (socket.isConnected() == false) {
+        	if (!socket.isConnected()) {
         		remove(username);
         		close();
         		return;
@@ -221,7 +221,7 @@ public class Server {
         						KeepGoing = writeMsg("Offline");
         					else {
         						//tim thay destination client
-        						KeepGoing = writeMsg("FOUND" + acc.getUserName()+ " " + acc.getIpPort());
+        						KeepGoing = writeMsg("FOUND " + acc.getUserName()+ " " + acc.getIpPort());
         					}
         				}
         				else if(seperated[0].equalsIgnoreCase("ADD")) {
