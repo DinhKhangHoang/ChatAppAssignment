@@ -228,7 +228,7 @@ public class Server {
         					Account acc = mapClient.get(seperated[1]);
         					if(acc == null)
         						KeepGoing = writeMsg("NOTEXIST");
-        					else if(acc.getIpPort() == "0"){
+        					else if(acc.getIpPort().equals("0") || acc.isFriend(username)){
         						KeepGoing = writeMsg("false");
         					}
         					else {

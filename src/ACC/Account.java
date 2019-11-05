@@ -9,23 +9,15 @@ public class Account {
 	private String[] lstFriend;
 	
 	public Account(String usr, String lst) {
-		this.userName = usr;
-		this.ip_port = "0";
-		if(lst.equals("")) {
-			this.lstFriend = null;
-		}
-		else
-			this.lstFriend = lst.split(",");
+		setUserName(usr);
+		setIpPort("0");
+		setLstFriend(lst);
 	}
 	
 	public Account(String usr, String ipport, String lst) {
-		this.userName = usr;
-		this.ip_port = ipport;
-		if(lst.equals("")) {
-			this.lstFriend = null;
-		}
-		else
-			this.lstFriend = lst.split(",");
+		setUserName(usr);
+		setIpPort(ipport);
+		setLstFriend(lst);
 	}
 	
 	public void setUserName(String usr) {
@@ -37,13 +29,23 @@ public class Account {
 	}
 	
 	public void setLstFriend(String lst) {
-		this.lstFriend = lst.split(",");
+		if(lst.equals("")) {
+			this.lstFriend = null;
+		}
+		else
+			this.lstFriend = lst.split(",");
 	}
 	
 	public void addFriend(String name) {
-		ArrayList<String> arrlst = new ArrayList<String>(Arrays.asList(this.lstFriend));
-		arrlst.add(name);
-		this.lstFriend = (String[])arrlst.toArray();
+		if(this.lstFriend != null) {
+			ArrayList<String> arrlst = new ArrayList<String>(Arrays.asList(this.lstFriend));
+			arrlst.add(name);
+			this.lstFriend = arrlst.toArray(this.lstFriend);
+		}
+		else {
+			this.lstFriend = new String[1];
+			this.lstFriend[0] = name;
+		}
 	}
 	
 	public String getUserName() {
@@ -56,5 +58,18 @@ public class Account {
 	
 	public String[] getLstFriend() {
 		return this.lstFriend;
+	}
+	
+	public boolean isFriend(String name) {
+		if(this.lstFriend != null) {
+			ArrayList<String> arrlst = new ArrayList<String>(Arrays.asList(this.lstFriend));
+			if(arrlst.contains(name))
+				return true;
+			else
+				return false;
+		}
+		else {
+			return false;
+		}
 	}
 }
