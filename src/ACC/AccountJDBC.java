@@ -27,6 +27,7 @@ public class AccountJDBC {
         }
         return instance;
     }
+    
     public Connection getConnection(String dbURL, String userName, 
             String password) {
         Connection conn = null;
@@ -40,27 +41,25 @@ public class AccountJDBC {
         }
         return conn;
     }
-    public boolean InsertAccount(String userName, String lstFriend) {
+    
+    synchronized public boolean InsertAccount(String userName, String lstFriend) {
     	try {
     		Connection conn = getConnection(DB_URL, USER_NAME, PASSWORD);
     		if (conn == null)
     			return false;
-    		
-    		
 			PreparedStatement prstmt = conn.prepareStatement("insert into Accounts(USERNAME, LISTFRIEND) values (?,?)");
 			prstmt.setString(1,  userName);
 			prstmt.setString(2,  lstFriend);
-			
 			prstmt.executeUpdate();
 			conn.close();
 			return true;
     	}
     	catch(Exception ex){
-    		
+    		ex.printStackTrace();
     	}
-        
     	return true;
     }
+    
     public boolean Login(String userName) {
     	boolean chch = false;
     	try {
@@ -105,8 +104,8 @@ public class AccountJDBC {
     		ex.printStackTrace();
     		return null;
     	}
-    	
     }
+    
     public boolean updateLstFriend(String username, String newfriend) {
     	try {
     		Connection conn = getConnection(DB_URL, USER_NAME, PASSWORD);
@@ -136,7 +135,5 @@ public class AccountJDBC {
     		return false;
     	}
     }
-    
-    
 }
 

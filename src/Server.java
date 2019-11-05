@@ -82,8 +82,8 @@ public class Server {
     	for(int i = 0; i < clientList.size(); i++) {
             ClientThread temp = clientList.get(i);
             //It was found
-            if(temp.username == des) {
-                if(temp.writeMsg("REQUEST "+ cur))
+            if(temp.username.equalsIgnoreCase(des)) {
+                if(temp.writeMsg("REQUEST" + " " + cur))
                 	return true;
                 else
                 	return false;
@@ -221,7 +221,7 @@ public class Server {
         						KeepGoing = writeMsg("Offline");
         					else {
         						//tim thay destination client
-        						KeepGoing = writeMsg("FOUND " + acc.getUserName()+ " " + acc.getIpPort());
+        						KeepGoing = writeMsg("FOUND" +" "+ acc.getUserName()+ " " + acc.getIpPort());
         					}
         				}
         				else if(seperated[0].equalsIgnoreCase("ADD")) {
@@ -233,10 +233,10 @@ public class Server {
         					}
         					else {
         						if(sendRequest(seperated[1])) {
-        							writeMsg("false");
+        							KeepGoing = writeMsg("true");
         						}
         						else {
-        							writeMsg("true");
+        							KeepGoing = writeMsg("false");
         						}
         					}
         				}
