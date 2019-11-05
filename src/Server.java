@@ -184,7 +184,7 @@ public class Server {
         
         //xu li tin hieu tu client
         public void run() {
-        	if (socket.isConnected() == false) {
+        	if (!socket.isConnected()) {
         		remove(username);
         		close();
         		return;
