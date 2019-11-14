@@ -91,6 +91,33 @@ public class Server {
         }
     	return false;
     }
+    public boolean serverSendMSG(String des, String msg) {
+    	for(int i = 0; i < clientList.size(); i++) {
+            ClientThread temp = clientList.get(i);
+            //It was found
+            if(temp.username.equalsIgnoreCase(des)) {
+                if(temp.writeMsg("MSG" + " " + msg.substring(3+des.length()+ 2)))
+                	return true;
+                else
+                	return false;
+            }
+        }
+    	return false;
+    }
+    
+    public boolean requestAdmin() {
+    	for(int i = 0; i < clientList.size(); i++) {
+            ClientThread temp = clientList.get(i);
+            //It was found
+            if(temp.username.equalsIgnoreCase("admin")) {
+                if(temp.writeMsg("CHATADMIN"))
+                	return true;
+                else
+                	return false;
+            }
+        }
+    	return false;
+    }
     
     private void display(String prompt) {
         String time = theDate.format(new Date()) + " " + prompt;
@@ -131,43 +158,55 @@ public class Server {
                 // read login packet
                 while(KeepGoing){
                     packet = Input.readLine();
+                    display(packet);
                     String[] seperated = packet.split(" ");
                     if(seperated.length == 3 && seperated[0].equalsIgnoreCase("login")) {
-                    	Account acc = mapClient.get(seperated[1]);
-                    	if(acc != null) {
-                    		// neu tim thay client trong bang
-                    		
-                    		if(!acc.getIpPort().equals("0")) {
-                    			//client da dang nhap roi
-                    			display("Username conflict detected.");
-                                KeepGoing = writeMsg("FALSE");
-                    		}
-                    		else {
-                    			//client co trong bang nhung chua dang nhap
-                    			// cho phep dang nhap + sua port luu trong bang
-                    			acc.setIpPort(Address + ":" + seperated[2]);
-                    			mapClient.replace(seperated[1], acc);
-                    			this.P2pPort = Integer.parseInt(seperated[2]);
-                    			this.username = seperated[1];
-                    			// dang nhap thanh cong
-                                writeMsg("TRUE");
-                                display(username + " just connected.");
-                    			break;
-                    		}
-                        }
-                        else {
-                        	// dang ky tai khoan lan dau them client vao bang
-                        	acc = new Account(seperated[1], Address + ":" + seperated[2], "");
-                        	mapClient.put(seperated[1], acc);
-                        	AccountJDBC db = AccountJDBC.getInstance();
-                        	db.InsertAccount(seperated[1], ""); 	
-                        	this.P2pPort = Integer.parseInt(seperated[2]);
-                        	this.username = seperated[1];
-                        	// dang nhap thanh cong
-                            writeMsg("TRUE");
-                            display(username + " just connected.");
-                        	break;
-                        }
+                    	if(seperated[1].equalsIgnoreCase("guest") == false) {
+	                    	Account acc = mapClient.get(seperated[1]);
+	                    	if(acc != null) {
+	                    		// neu tim thay client trong bang
+	                    		
+	                    		if(!acc.getIpPort().equals("0")) {
+	                    			//client da dang nhap roi
+	                    			display("Username conflict detected.");
+	                                KeepGoing = writeMsg("FALSE");
+	                    		}
+	                    		else {
+	                    			//client co trong bang nhung chua dang nhap
+	                    			// cho phep dang nhap + sua port luu trong bang
+	                    			acc.setIpPort(Address + ":" + seperated[2]);
+	                    			mapClient.replace(seperated[1], acc);
+	                    			this.P2pPort = Integer.parseInt(seperated[2]);
+	                    			this.username = seperated[1];
+	                    			// dang nhap thanh cong
+	                                writeMsg("TRUE");
+	                                display(username + " just connected.");
+	                    			break;
+	                    		}
+	                        }
+	                        else {
+	                        	// dang ky tai khoan lan dau them client vao bang
+	                        	acc = new Account(seperated[1], Address + ":" + seperated[2], "");
+	                        	mapClient.put(seperated[1], acc);
+	                        	AccountJDBC db = AccountJDBC.getInstance();
+	                        	db.InsertAccount(seperated[1], ""); 	
+	                        	this.P2pPort = Integer.parseInt(seperated[2]);
+	                        	this.username = seperated[1];
+	                        	// dang nhap thanh cong
+	                            writeMsg("TRUE");
+	                            display(username + " just connected.");
+	                        	break;
+	                        }
+                    	}
+                    	else {
+                    		this.username = seperated[1];
+                    		this.P2pPort = Integer.parseInt(seperated[2]);
+                    		Account acc = new Account(this.username, this.P2pPort);
+                    		mapClient.put(this.username, acc);
+                    		writeMsg("TRUE");
+                    		display(username + " just connected.");
+                    		break;
+                    	}
                     }
                     else {
                     	//sai cu phap login
@@ -205,8 +244,11 @@ public class Server {
         					//gui list usr
         					KeepGoing = sendListFriend();
         				}
+        				else if(seperated[0].equalsIgnoreCase("chatadmin")) {
+        					chattoAdmin();
+        				}
         				else {
-        					display("Wrong request!");
+        					display("Wrong request! in case 1");
                         	KeepGoing = writeMsg("FALSE");
         				}
         				break;
@@ -252,17 +294,27 @@ public class Server {
         					db.updateLstFriend(username, seperated[1]);
         				}
         				else {
-        					display("Wrong request!");
+        					display("Wrong request! in case 2");
                         	KeepGoing = writeMsg("FALSE");
         				}
         				break;
         			default:
-        				display("Wrong request!");
-        				KeepGoing = writeMsg("FALSE");
+        				if (seperated[0].equalsIgnoreCase("msg")) {
+        					//Account acc = mapClient.get(seperated[1]);
+        					sendMSG(seperated[1], packet);
+        					KeepGoing = true;
+        				}
+        				else {
+        					display("Wrong request! in case 3");
+            				KeepGoing = writeMsg("FALSE");
+        				}
         				break;
+        			//default:
+        			//	display("Wrong request! in case default");
+        			//	KeepGoing = writeMsg("FALSE");
+        			//	break;
         			}
         		}
-        		
         	}
         	catch(IOException e){
     			display("Exception creating new Input/output Streams: " + e);
@@ -270,15 +322,21 @@ public class Server {
     		}
         	this.P2pPort = 0;
 			//set port = 0 offline
+        	
         	Account acc = mapClient.get(this.username);
         	acc.setIpPort("0");
 			mapClient.replace(this.username, acc);
         	remove(username);
         	close();
         }
-        
+        private boolean chattoAdmin() {
+        	return requestAdmin();
+        }
         private boolean sendRequest(String desname) {
         	return makeFriend(username, desname);
+        }
+        private boolean sendMSG(String desname, String msg) {
+        	return serverSendMSG(desname, msg);
         }
         //gui list user cho client
         private boolean sendListFriend() {
@@ -299,6 +357,7 @@ public class Server {
         	}
         	
         	successful = writeMsg("END");
+        	display("Sendlist for " + username);
         	return successful;
         }
         

@@ -14,6 +14,12 @@ public class Account {
 		setLstFriend(lst);
 	}
 	
+	public Account(String usr, int ipport) {
+		setUserName(usr);
+		setIpPort(Integer.toString(ipport));
+		setLstFriend("");
+	}
+	
 	public Account(String usr, String ipport, String lst) {
 		setUserName(usr);
 		setIpPort(ipport);
