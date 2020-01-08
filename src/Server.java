@@ -148,6 +148,7 @@ public class Server {
                 this.Output = new PrintWriter(socket.getOutputStream(),true);
                 this.Input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 Address = socket.getInetAddress().toString();
+                if(Address.equals(""))
                 Port = socket.getPort();
                 this.date = new Date().toString();
                 System.out.println("Address is: " + Address);
@@ -201,7 +202,7 @@ public class Server {
                     	else {
                     		this.username = seperated[1];
                     		this.P2pPort = Integer.parseInt(seperated[2]);
-                    		Account acc = new Account(this.username, this.P2pPort);
+                    		Account acc = new Account(this.username, Address + ":" + seperated[2], "");
                     		mapClient.put(this.username, acc);
                     		writeMsg("TRUE");
                     		display(username + " just connected.");
